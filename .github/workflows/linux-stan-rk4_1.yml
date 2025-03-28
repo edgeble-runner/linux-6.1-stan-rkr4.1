@@ -41,11 +41,17 @@ jobs:
           sudo apt install -y gcc-9 openssl devscripts build-essential crossbuild-essential-arm64 bc bison
           sudo apt install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu libelf-dev libssl-dev kmod cpio libssl-dev
 
-      - name: Clone and Compile
+      - name: Clone Kernel
+        run: git clone --branch linux-6.1-stan-rkr4.1 git@gitlab.com:edgeble/core/kernel-6.1.git
+
+      - name: Copy runner.config
+        run: cp .github/workflows/runner.config kernel-6.1/arch/arm64/configs/runner.config
+
+      - name: Compile
         run: |
-          git clone --branch linux-6.1-stan-rkr4.1 git@gitlab.com:edgeble/core/kernel-6.1.git && cd kernel-6.1
+          cd kernel-6.1
           export CROSS_COMPILE=aarch64-linux-gnu-
-          ARCH=arm64 make rockchip_linux_defconfig edgeble-6tops.config
+          ARCH=arm64 make rockchip_linux_defconfig edgeble-6tops.config runner.config
           mkdir -p ${{ github.workspace }}/out
           mkdir -p ${{ github.workspace }}/out/linux-6.1-stan-rk4.1
           mkdir -p ${{ github.workspace }}/out/dtb/rockchip
@@ -75,10 +81,9 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: "v1.1-rk4.1"
+          tag_name: "v1.2"
           body: |
-            - Add rk4.1 kernel
-            - Add edgeble DT, DTBO
+            - Add runner.config
           files: |
             ${{ github.workspace }}/out/linux-6.1-stan-rk4.1.tar.xz
             ${{ github.workspace }}/out/modules-6.1-stan-rk4.1.tar.xz
